@@ -1,6 +1,6 @@
 use enigo::Keyboard;
 use serde::{Serialize, Deserialize};
-use std::{default::Default, env, ffi::OsStr, fs, path::Path, process::Command};
+use std::{default::Default, env, ffi::OsStr, fs, process::Command};
 use nix::unistd::{fork, ForkResult};
 
 #[derive(Serialize, Deserialize)]
@@ -72,10 +72,10 @@ impl<'rofi> rofi_mode::Mode<'rofi> for Mode {
   const NAME: &'static str = "rofi-snippets\0";
 
   fn init(mut api: rofi_mode::Api<'rofi>) -> Result<Self, ()> {
-    let config_dir = env::var("XDG_CONFIG_HOME")
-      .or_else(|_| env::var("HOME").map(|v| v + "/.config"))
+    let config_file = env::var("ROFI_SNIPPETS_CONFIG")
+      .or_else(|_| env::var("XDG_CONFIG_HOME").map(|v| v + "/rofi-snippets/config.json"))
+      .or_else(|_| env::var("HOME").map(|v| v + "/.config/rofi-snippets/config.json"))
       .expect("Unable to locate config dir");
-    let config_file = Path::new(&config_dir).join("rofi-snippets/config.json");
     let cfg: Config = fs::File::open(&config_file)
       .map(|v| serde_json::from_reader(v).expect("Invalid config file"))
       .unwrap_or_default();

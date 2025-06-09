@@ -48,7 +48,7 @@
         program = lib.getExe (pkgs.writeShellScriptBin "test" ''
           set -eu
 
-          ROFI_PLUGIN_PATH=target/debug rofi \
+          ROFI_SNIPPETS_CONFIG=$PWD/examples/basic.json ROFI_PLUGIN_PATH=target/debug rofi \
             -modes run,rofi-snippets \
             -show rofi-snippets
         '');
