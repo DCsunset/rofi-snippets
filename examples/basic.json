@@ -4,21 +4,22 @@
       "key": "hello",
       "description": "Hello Test",
       "snippet": {
-        "text": "Hello world"
+        "text": "Hello world ❤️"
       }
     },
     {
       "key": "date",
       "snippet": {
-        "shell": "date --iso-8601"
+        "command": ["date", "--iso-8601"]
       }
     },
     {
-      "key": "date2",
+      "key": "datetime",
       "snippet": {
-        "command": [
-          "date",
-          "--iso-8601"
+        "sequence": [
+          { "shell": "date +%F" },
+          { "text": " " },
+          { "shell": "date +%T" }
         ]
       }
     }
