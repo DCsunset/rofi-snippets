@@ -113,7 +113,6 @@ impl<'rofi> rofi_mode::Mode<'rofi> for Mode {
           ForkResult::Child => {
             // std::thread::sleep(std::time::Duration::from_secs(1));
             let mut enigo = enigo::Enigo::new(&enigo::Settings::default()).unwrap();
-            println!("{}", self.compute_snippet(&self.cfg.entries[selected].snippet).as_str());
             enigo.text(
               self.compute_snippet(&self.cfg.entries[selected].snippet).as_str()
             ).unwrap();
