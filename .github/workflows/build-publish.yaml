@@ -6,11 +6,6 @@ on:
       - 'v*'
   workflow_dispatch:
     inputs:
-      cargo_release:
-        description: Release Cargo package
-        type: boolean
-        required: true
-        default: false
       github_release:
         description: Release GitHub package
         type: boolean
