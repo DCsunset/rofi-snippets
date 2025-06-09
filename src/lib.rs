@@ -1,0 +1,142 @@
+use enigo::Keyboard;
+use serde::{Serialize, Deserialize};
+use std::{default::Default, env, ffi::OsStr, fs, path::Path, process::Command};
+use nix::unistd::{fork, ForkResult};
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum Snippet {
+  Text(String),
+  Command(Vec<String>),
+  Shell(String),
+  Sequence(Vec<Snippet>),
+}
+
+/// Run command and get output as string
+fn run_command(cmd: &str, args: impl IntoIterator<Item = impl AsRef<OsStr>>) -> String {
+  let output = Command::new(OsStr::new(cmd))
+    .args(args)
+    .output()
+    .expect("Error running command");
+  String::from_utf8(output.stdout).expect("Fail to decode output")
+}
+
+#[derive(Serialize, Deserialize)]
+struct Entry {
+  key: String,
+  snippet: Snippet,
+  description: Option<String>,
+}
+
+impl From<&Entry> for rofi_mode::String {
+  fn from(entry: &Entry) -> Self {
+    let desc = entry.description.as_ref()
+      .map(|v| format!("<span weight='light' size='small' style='italic'>({})</span>", v)).unwrap_or_default();
+    rofi_mode::format!("{} {}", entry.key, desc)
+  }
+}
+
+#[derive(Serialize, Deserialize, Default)]
+struct Config {
+  shell: Option<String>,
+  entries: Vec<Entry>,
+}
+
+struct Mode {
+  cfg: Config,
+}
+
+impl Mode {
+  fn compute_snippet(&self, snippet: &Snippet) -> String {
+    match snippet {
+      Snippet::Text(text) => text.clone(),
+      Snippet::Command(cmd) => {
+        run_command(cmd.get(0).expect("Empty command"), &cmd[1..])
+      },
+      Snippet::Shell(cmd) => {
+        run_command(
+          self.cfg.shell.as_ref().map(|v| v.as_str()).unwrap_or("sh"),
+          ["-c", cmd]
+        )
+      },
+      Snippet::Sequence(seq) => {
+        seq.iter()
+          .map(|v| self.compute_snippet(v))
+          .fold(String::new(), |l, r| l + r.as_str())
+      }
+    }
+  }
+}
+
+impl<'rofi> rofi_mode::Mode<'rofi> for Mode {
+  const NAME: &'static str = "rofi-snippets\0";
+
+  fn init(mut api: rofi_mode::Api<'rofi>) -> Result<Self, ()> {
+    let config_dir = env::var("XDG_CONFIG_HOME")
+      .or_else(|_| env::var("HOME").map(|v| v + "/.config"))
+      .expect("Unable to locate config dir");
+    let config_file = Path::new(&config_dir).join("rofi-snippets/config.json");
+    let cfg: Config = fs::File::open(&config_file)
+      .map(|v| serde_json::from_reader(v).expect("Invalid config file"))
+      .unwrap_or_default();
+
+    api.set_display_name("snippets");
+    Ok(Self { cfg })
+  }
+
+  fn entries(&mut self) -> usize {
+    self.cfg.entries.len()
+  }
+
+  fn entry_content(&self, line: usize) -> rofi_mode::String {
+    (&self.cfg.entries[line]).into()
+  }
+
+  fn entry_style(&self, _line: usize) -> rofi_mode::Style {
+    rofi_mode::Style::MARKUP
+  }
+
+  fn react(
+    &mut self,
+    event: rofi_mode::Event,
+    input: &mut rofi_mode::String,
+  ) -> rofi_mode::Action {
+    match event {
+      rofi_mode::Event::Cancel { selected: _ } => return rofi_mode::Action::Exit,
+      rofi_mode::Event::Ok {
+        alt: _,
+        selected,
+      } => {
+        // Must send input events in the backround to let rofi exit first
+        match unsafe { fork().unwrap() } {
+          ForkResult::Parent { .. } => {},
+          ForkResult::Child => {
+            // std::thread::sleep(std::time::Duration::from_secs(1));
+            let mut enigo = enigo::Enigo::new(&enigo::Settings::default()).unwrap();
+            println!("{}", self.compute_snippet(&self.cfg.entries[selected].snippet).as_str());
+            enigo.text(
+              self.compute_snippet(&self.cfg.entries[selected].snippet).as_str()
+            ).unwrap();
+            unsafe { nix::libc::exit(0) };
+          }
+        }
+        return rofi_mode::Action::Exit;
+      }
+      rofi_mode::Event::Complete {
+        selected: Some(selected),
+      } => {
+        input.clear();
+        input.push_str(&self.cfg.entries[selected].key);
+      }
+      _ => {}
+    }
+    rofi_mode::Action::Reload
+  }
+
+  fn matches(&self, line: usize, matcher: rofi_mode::Matcher<'_>) -> bool {
+    matcher.matches(&self.cfg.entries[line].key)
+  }
+}
+
+rofi_mode::export_mode!(Mode);
+

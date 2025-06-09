@@ -1,0 +1,26 @@
+{
+  "entries": [
+    {
+      "key": "hello",
+      "description": "Hello Test",
+      "snippet": {
+        "text": "Hello world"
+      }
+    },
+    {
+      "key": "date",
+      "snippet": {
+        "shell": "date --iso-8601"
+      }
+    },
+    {
+      "key": "date2",
+      "snippet": {
+        "command": [
+          "date",
+          "--iso-8601"
+        ]
+      }
+    }
+  ]
+}
