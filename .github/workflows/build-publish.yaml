@@ -39,6 +39,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y libglib2.0-dev libpango1.0-dev libcairo2-dev libxdo-dev libxkbcommon-dev
+
       - name: Install cross
         run: |
           cargo install cross --git https://github.com/cross-rs/cross.git
