@@ -48,7 +48,6 @@
         program = lib.getExe (pkgs.writeShellScriptBin "test" ''
           set -eu
 
-          cargo build
           ROFI_PLUGIN_PATH=target/debug rofi \
             -modes run,rofi-snippets \
             -show rofi-snippets
