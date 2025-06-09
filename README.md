@@ -6,6 +6,11 @@ It supports both Wayland and X11.
 
 ## Installation
 
+### Pre-built binaries
+
+Pre-built binaries can be downloaded from GitHub release.
+Put the downloaded `.so` file in Rofi lib dir depending on your Rofi installation (e.g. `/lib/rofi`) or add the plugin's dir to `ROFI_PLUGIN_PATH` environment variable.
+
 ### Manual
 
 1. Clone this repo
@@ -16,8 +21,13 @@ It supports both Wayland and X11.
    - Wayland only: `cargo build --release --features=wayland --no-default-features`
    - X11 only: `cargo build --release --features=x11 --no-default-features`
    - Both: `cargo build --release`
-4. Move the built plugin (`target/release/librofi_snippets.so`) to Rofi lib dir depending on your Rofi installation (e.g. `/lib/rofi`) or add the plugin's dir to `ROFI_PLUGIN_PATH` environment variable
-5. Start Rofi: `rofi -show rofi-snippets -modes rofi-snippets`
+4. Move the built plugin (`target/release/librofi_snippets.so`) to Rofi lib dir or add the plugin's dir to `ROFI_PLUGIN_PATH` environment variable
+
+
+## Usage
+
+To start Rofi with rofi-snippets mode:
+`rofi -show rofi-snippets -modes rofi-snippets`
 
 
 ## Configuration
