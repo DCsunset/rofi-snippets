@@ -43,6 +43,20 @@ jobs:
       - name: Install dependencies (aarch64)
         if: ${{ startsWith(matrix.target, 'aarch64') }}
         run: |
+          FLAVOR="$(lsb_release -sc)"
+
+          sudo tee /etc/apt/sources.list.d/arm64.list <<LIST
+          deb [arch=arm64] http://ports.ubuntu.com/ ${FLAVOR} main restricted
+          deb [arch=arm64] http://ports.ubuntu.com/ ${FLAVOR}-updates main restricted
+          deb [arch=arm64] http://ports.ubuntu.com/ ${FLAVOR} universe
+          deb [arch=arm64] http://ports.ubuntu.com/ ${FLAVOR}-updates universe
+          deb [arch=arm64] http://ports.ubuntu.com/ ${FLAVOR} multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ ${FLAVOR}-updates multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ ${FLAVOR}-backports main restricted universe multiverse
+          LIST
+          # prevent original source list to use new architecture
+          sudo sed -E -i 's/deb (http|file|mirror)/deb [arch=amd64] \1/' /etc/apt/sources.list
+
           sudo dpkg --add-architecture arm64
           sudo apt-get update
           sudo apt-get install -y libgtk-4-dev:arm64 libxdo-dev:arm64 libxkbcommon-dev:arm64
