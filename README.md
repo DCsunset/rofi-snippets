@@ -6,12 +6,60 @@ It supports both Wayland and X11.
 
 ## Installation
 
-### Pre-built binaries
+### Nix
+
+This package is available as an [NUR](https://nur.nix-community.org/documentation/) package `nur.repos.dcsunset.rofi-snippets`.
+It is also available from the flake output of the [NUR repo](https://github.com/DCsunset/nur-packages), where a NixOS overlay is provided as well.
+
+To use it with NixOS:
+```nix
+environment.systemPackages = [
+  (pkgs.rofi.override (old: {
+    plugins = old.plugins ++ [nur.repos.dcsunset.rofi-snippets];
+  }))
+];
+```
+
+Or you can also use it with home-manager:
+```nix
+programs.rofi = {
+  enable = true;
+  plugins = [nur.repos.dcsunset.rofi-snippets];
+}
+```
+
+The NUR repo also provides a home-manager module via flake:
+``` nix
+{
+  imports = [ inputs.nur-dcsunset.homeManagerModules.rofi-snippets ];
+
+  # rofi should be enabled as well
+  programs.rofi.enable = true;
+
+  programs.rofi-snippets = {
+    enable = true;
+    settings = {
+      entries = [
+        {
+          key = "date";
+          snippet.command = ["date" "--iso-8601"];
+        }
+      ];
+    };
+  };
+}
+```
+
+
+### Pre-built Binaries
 
 Pre-built binaries can be downloaded from GitHub release.
 Put the downloaded `.so` file in Rofi lib dir depending on your Rofi installation (e.g. `/lib/rofi`) or add the plugin's dir to `ROFI_PLUGIN_PATH` environment variable.
 
-### Manual
+Note that runtime dependencies (including glib, cairo, pango) must be installed before using the pre-built binaries.
+If the pre-built binaries don't work for your system, try other installation methods.
+
+### Manually
 
 1. Clone this repo
 2. Install dependencies based on your environment
