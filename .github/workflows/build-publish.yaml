@@ -34,10 +34,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install dependencies (x86_64)
+        if: ${{ startsWith(matrix.target, 'x86_64') }}
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libxdo-dev libxkbcommon-dev
+          sudo apt-get install -y libgtk-4-dev libxdo-dev libxkbcommon-dev
+
+      - name: Install dependencies (aarch64)
+        if: ${{ startsWith(matrix.target, 'aarch64') }}
+        run: |
+          sudo dpkg --add-architecture arm64
+          sudo apt-get update
+          sudo apt-get install -y libgtk-4-dev:arm64 libxdo-dev:arm64 libxkbcommon-dev:arm64
 
       - name: Install cross
         run: |
