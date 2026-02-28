@@ -110,7 +110,7 @@ struct Entry {
   description: Option<String>,
 }
 
-# Snippet is a tagged union
+// Snippet is a tagged union
 #[serde(tag = "type", rename_all = "camelCase")]
 enum Snippet {
   // Use the text as is
