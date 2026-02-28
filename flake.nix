@@ -54,7 +54,8 @@
           cargo build
           ROFI_SNIPPETS_CONFIG=$PWD/examples/basic.json ROFI_PLUGIN_PATH=target/debug rofi \
             -modes rofi-snippets \
-            -show rofi-snippets
+            -show rofi-snippets \
+            -matching prefix
         '');
       };
     });
