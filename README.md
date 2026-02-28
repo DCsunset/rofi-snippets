@@ -42,7 +42,11 @@ The NUR repo also provides a home-manager module via flake:
       entries = [
         {
           key = "date";
-          snippet.command = ["date" "--iso-8601"];
+          snippet = {
+            type = "command";
+            value = [ "date" "--iso-8601" ];
+            trim = true;
+          };
         }
       ];
     };
