@@ -22,9 +22,14 @@ use nix::unistd::{fork, ForkResult};
 #[derive(Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "camelCase")]
 enum Snippet {
+  // Use the text as is
   Text { value: String },
+  // Run a command and use the output
+  // (the first elem is the command and the rest are arguments)
   Command { value: Vec<String>, trim: Option<bool> },
+  // Run a shell command and use the output
   Shell { value: String, trim: Option<bool> },
+  // Evaluate a sequence of snippets and concatenate the outputs
   Sequence { value: Vec<Snippet> },
 }
 
@@ -47,8 +52,11 @@ fn trim_str(s: String, trim: bool) -> String {
 
 #[derive(Serialize, Deserialize)]
 struct Entry {
+  // string to match in Rofi
   key: String,
+  // Snippet will be used for simulating keyboard input
   snippet: Snippet,
+  // (optionaL) extra description for this entry
   description: Option<String>,
 }
 
@@ -62,8 +70,12 @@ impl From<&Entry> for rofi_mode::String {
 
 #[derive(Serialize, Deserialize, Default)]
 struct Config {
+  // shell command to use for shell snippet (default: sh)
   shell: Option<String>,
+  // snippet entries
   entries: Vec<Entry>,
+  // Delay time before sending input event to ensure rofi window closes (in ms)
+  delay: Option<u64>,
 }
 
 struct Mode {
@@ -141,7 +153,9 @@ impl<'rofi> rofi_mode::Mode<'rofi> for Mode {
         match unsafe { fork().unwrap() } {
           ForkResult::Parent { .. } => {},
           ForkResult::Child => {
-            // std::thread::sleep(std::time::Duration::from_secs(1));
+            if let Some(delay) = self.cfg.delay {
+              std::thread::sleep(std::time::Duration::from_millis(delay));
+            }
             let mut enigo = enigo::Enigo::new(&enigo::Settings::default()).unwrap();
             enigo.text(
               self.compute_snippet(&self.cfg.entries[selected].snippet).as_str()

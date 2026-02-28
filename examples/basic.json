@@ -1,4 +1,6 @@
 {
+  "shell": "bash",
+  "delay": 100,
   "entries": [
     {
       "key": "hello",

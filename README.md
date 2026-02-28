@@ -85,27 +85,40 @@ Rofi-snippets will look for the configuration file in the following order (with 
 - `$XDG_CONFIG_HOME/rofi-snippets/config.json`
 - `$HOME/.config/rofi-snippets/config.json`
 
-The config file is in JSON format and follows the following structure (shown in TypeScript):
-```ts
+The config file is in JSON format and follows the following structure (shown in Rust):
+```rust
 // Type for the whole config file
-type Config = {
-  // (optional) shell command to use for shell snippet (default: sh)
-  shell?: string,
+struct Config {
+  // shell command to use for shell snippet (default: sh)
+  shell: Option<String>,
   // snippet entries
-  entries: Entry[],
+  entries: Vec<Entry>,
+  // Delay time before sending input event to ensure rofi window closes (in ms)
+  delay: Option<u64>,
 }
 
-type Entry = {
+struct Entry {
   // string to match in Rofi
-  key: string,
+  key: String,
   // Snippet will be used for simulating keyboard input
   snippet: Snippet,
   // (optionaL) extra description for this entry
-  description?: string
+  description: Option<String>,
 }
 
 # Snippet is a tagged union
-type Snippet = Text | Command | Shell | Sequence
+#[serde(tag = "type", rename_all = "camelCase")]
+enum Snippet {
+  // Use the text as is
+  Text { value: String },
+  // Run a command and use the output
+  // (the first elem is the command and the rest are arguments)
+  Command { value: Vec<String>, trim: Option<bool> },
+  // Run a shell command and use the output
+  Shell { value: String, trim: Option<bool> },
+  // Evaluate a sequence of snippets and concatenate the outputs
+  Sequence { value: Vec<Snippet> },
+}
 
 // Use the text as is
 type Text = {
@@ -140,6 +153,7 @@ Example:
 ```json
 {
   "shell": "bash",
+  "delay": 100,
   "entries": [
     {
       "key": "hello",
