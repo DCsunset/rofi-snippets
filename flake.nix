@@ -15,6 +15,9 @@
     in {
       default = pkgs.mkShell {
         packages = with pkgs; [
+          # use the original rofi to avoid interference with installed system plugin
+          rofi
+
 		      pkg-config
           glib
           cairo
