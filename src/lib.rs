@@ -20,12 +20,12 @@ use std::{default::Default, env, ffi::OsStr, fs, process::Command};
 use nix::unistd::{fork, ForkResult};
 
 #[derive(Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
+#[serde(tag = "type", rename_all = "camelCase")]
 enum Snippet {
-  Text(String),
-  Command(Vec<String>),
-  Shell(String),
-  Sequence(Vec<Snippet>),
+  Text { value: String },
+  Command { value: Vec<String>, trim: Option<bool> },
+  Shell { value: String, trim: Option<bool> },
+  Sequence { value: Vec<Snippet> },
 }
 
 /// Run command and get output as string
@@ -35,6 +35,14 @@ fn run_command(cmd: &str, args: impl IntoIterator<Item = impl AsRef<OsStr>>) -> 
     .output()
     .expect("Error running command");
   String::from_utf8(output.stdout).expect("Fail to decode output")
+}
+
+fn trim_str(s: String, trim: bool) -> String {
+  if trim {
+    s.trim().to_string()
+  } else {
+    s
+  }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -65,18 +73,24 @@ struct Mode {
 impl Mode {
   fn compute_snippet(&self, snippet: &Snippet) -> String {
     match snippet {
-      Snippet::Text(text) => text.clone(),
-      Snippet::Command(cmd) => {
-        run_command(cmd.get(0).expect("Empty command"), &cmd[1..])
-      },
-      Snippet::Shell(cmd) => {
-        run_command(
-          self.cfg.shell.as_ref().map(|v| v.as_str()).unwrap_or("sh"),
-          ["-c", cmd]
+      Snippet::Text { value } => value.clone(),
+      Snippet::Command { value, trim } => {
+        trim_str(
+          run_command(value.get(0).expect("Empty command"), &value[1..]),
+          trim.unwrap_or(false)
         )
       },
-      Snippet::Sequence(seq) => {
-        seq.iter()
+      Snippet::Shell { value, trim } => {
+        trim_str(
+          run_command(
+            self.cfg.shell.as_ref().map(|v| v.as_str()).unwrap_or("sh"),
+            ["-c", value]
+          ),
+          trim.unwrap_or(false)
+        )
+      },
+      Snippet::Sequence { value} => {
+        value.iter()
           .map(|v| self.compute_snippet(v))
           .fold(String::new(), |l, r| l + r.as_str())
       }

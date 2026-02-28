@@ -104,27 +104,34 @@ type Entry = {
   description?: string
 }
 
+# Snippet is a tagged union
 type Snippet = Text | Command | Shell | Sequence
 
 // Use the text as is
 type Text = {
-  text: string
+  type: "text",
+  value: string,
 }
 
 // Run a command and use the output
 // (the first elem is the command and the rest are arguments)
 type Command = {
-  command: string[]
+  type: "command",
+  value: string[],
+  trim?: boolean,  // Trim whitespaces at the beginning and the end
 }
 
 // Run a shell command and use the output
 type Shell = {
-  shell: string
+  type: "shell",
+  value: string,
+  trim?: boolean,  // Trim whitespaces at the beginning and the end
 }
 
 // Evaluate a sequence of snippets and concatenate the outputs
 type Sequence = {
-  sequence: Snippet[]
+  type: "sequence",
+  value: Snippet[],
 }
 ```
 
@@ -138,22 +145,26 @@ Example:
       "key": "hello",
       "description": "Hello Test",
       "snippet": {
-        "text": "Hello world"
+        "type": "text",
+        "value": "Hello world ❤️"
       }
     },
     {
       "key": "date",
       "snippet": {
-        "command": ["date", "--iso-8601"]
+        "type": "command",
+        "value": ["date", "--iso-8601"],
+        "trim": true
       }
     },
     {
       "key": "datetime",
       "snippet": {
-        "sequence": [
-          { "shell": "date +%F" },
-          { "text": " " },
-          { "shell": "date +%T" }
+        "type": "sequence",
+        "value": [
+          { "type": "shell", "value": "date +%F", "trim": true },
+          { "type": "text", "value": " " },
+          { "type": "shell", "value": "date +%T", "trim": true }
         ]
       }
     }
